@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calendrier - Planny</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@3.10.2/dist/fullcalendar.min.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar-scheduler@1.10.0/dist/scheduler.min.css"/>
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/moment@2.29.1/moment.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@3.10.2/dist/fullcalendar.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar-scheduler@1.10.0/dist/scheduler.min.js"></script>
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+
+        header {
+            background-color: #3498db;
+            color: #fff;
+            padding: 10px;
+            text-align: center;
+        }
+
+        #brand {
+            font-size: 24px;
+        }
+
+        section {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        footer {
+            background-color: #f5f5f5;
+            color: #333;
+            text-align: center;
+            padding: 10px;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+        }
+
+        /* Style pour le formulaire d'ajout d'événements */
+        #event-form {
+            margin-top: 20px;
+        }
+
+        #event-form label {
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        #event-form input,
+        #event-form select,
+        #event-form button {
+            margin-bottom: 16px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div id="brand">Planny - Calendrier</div>
+    </header>
+
+    <section>
+        <h2>Calendrier</h2>
+        <!-- Boutons pour changer la vue du calendrier -->
+        <div>
+            <button onclick="changeView('month')">Mois</button>
+            <button onclick="changeView('agendaWeek')">Semaine</button>
+            <button onclick="changeView('agendaDay')">Jour</button>
+        </div>
+        <!-- Calendrier -->
+        <div id="calendar"></div>
+        <!-- Formulaire d'ajout d'événements -->
+        <form id="event-form">
+            <label for="event-title">Titre de l'événement:</label>
+            <input type="text" id="event-title" required>
+            <label for="event-date">Date et heure de début:</label>
+            <input type="datetime-local" id="event-date" required>
+            <label for="event-recurrence">Répétition:</label>
+            <select id="event-recurrence">
+                <option value="none">Aucune</option>
+                <option value="daily">Quotidienne</option>
+                <option value="weekly">Hebdomadaire</option>
+                <option value="monthly">Mensuelle</option>
+            </select>
+            <button type="button" onclick="addEvent()">Ajouter l'événement</button>
+        </form>
+    </section>
+
+    <footer>
+        <p>&copy; 2023 Planny. All rights reserved.</p>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialise le calendrier
+            const calendar = $('#calendar').fullCalendar({
+                // Configuration du calendrier
+                header: {
+                    left: 'today',
+                    center: 'title',
+                    right: 'prev,next'
+                },
+                defaultView: 'month',
+                views: {
+                    month: { buttonText: 'Mois' },
+                    week: { buttonText: 'Semaine' },
+                    day: { buttonText: 'Jour' }
+                },
+                editable: true,
+                schedulerLicenseKey: 'GPL-My-Project-Is-Open-Source',
+                events: [
+                    // Vous pouvez ajouter vos événements ici
+                    {
+                        title: 'Réunion importante',
+                        start: '2023-12-15T10:00:00',
+                        end: '2023-12-15T12:00:00',
+                        allDay: false, // Permet d'afficher les heures
+                        recurrence: ''
+                    },
+                    {
+                        title: 'Déjeuner avec un ami',
+                        start: '2023-12-20T12:30:00',
+                        end: '2023-12-20T13:30:00',
+                        allDay: false,
+                        recurrence: ''
+                    }
+                    // ... Ajoutez d'autres événements selon vos besoins
+                ],
+                eventClick: function(event) {
+                    if (confirm("Voulez-vous supprimer cet événement?")) {
+                        $('#calendar').fullCalendar('removeEvents', function (calEvent) {
+                            return calEvent._id === event._id;
+                        });
+                    }
+                }
+            });
+
+            // Fonction pour changer la vue du calendrier
+            window.changeView = function(view) {
+                calendar.fullCalendar('changeView', view);
+            };
+        });
+
+        // Fonction pour ajouter un événement depuis le formulaire
+        function addEvent() {
+            const title = $('#event-title').val();
+            const date = $('#event-date').val();
+            const recurrence = $('#event-recurrence').val();
+
+            if (title && date) {
+                // Convertir la date en format ISO pour FullCalendar
+                const isoDate = moment(date).toISOString();
+
+                // Ajouter l'événement au calendrier
+                $('#calendar').fullCalendar('renderEvent', {
+                    title: title,
+                    start: isoDate,
+                    allDay: false, // Permet d'afficher les heures
+                    recurrence: recurrence === 'none' ? '' : recurrence
+                }, true);
+
+                // Si la récurrence est activée, ajouter des événements supplémentaires
+                if (recurrence !== 'none') {
+                    const recurrenceInterval = recurrence === 'daily' ? 1 : 7; // Interval quotidien ou hebdomadaire
+                    const recurrenceLength = 50; // Nombre d'occurrences souhaitées
+
+                    for (let i = 1; i <= recurrenceLength; i++) {
+                        const newDate = moment(date).add(i * recurrenceInterval, 'days').toISOString();
+                        $('#calendar').fullCalendar('renderEvent', {
+                            title: title,
+                            start: newDate,
+                            allDay: false,
+                            recurrence: recurrence
+                        }, true);
+                    }
+                }
+
+                // Effacer les champs du formulaire après l'ajout
+                $('#event-title').val('');
+                $('#event-date').val('');
+                $('#event-recurrence').val('none');
+            } else {
+                alert('Veuillez remplir tous les champs.');
+            }
+        }
+    </script>
+</body>
+</html>

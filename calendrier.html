@@ -17,6 +17,9 @@
             padding: 0;
             background-color: #f5f5f5;
             color: #333;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
         }
 
         header {
@@ -32,10 +35,11 @@
 
         section {
             max-width: 800px;
-            margin: 20px auto;
+            margin: 20px auto 40px;
             padding: 20px;
             background-color: #fff;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            flex-grow: 1;
         }
 
         footer {
@@ -43,8 +47,6 @@
             color: #333;
             text-align: center;
             padding: 10px;
-            position: fixed;
-            bottom: 0;
             width: 100%;
         }
 
@@ -63,6 +65,55 @@
         #event-form button {
             margin-bottom: 16px;
         }
+
+        /* Style pour le calendrier et son conteneur limité en largeur */
+        #calendar-container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        #calendar {
+            margin-top: 20px;
+        }
+
+        /* Style pour les boutons de changement de vue */
+        .view-buttons {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .view-buttons button {
+            background-color: #3498db;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            margin: 0 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .view-buttons button:hover {
+            background-color: #2980b9;
+        }
+
+        /* Style pour les cases d'informations d'un événement */
+        .event-info {
+            background-color: #3498db;
+            color: #fff;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+
+        .event-info h3 {
+            margin: 0;
+            font-size: 18px;
+        }
+
+        .event-info p {
+            margin: 5px 0 0;
+            font-size: 14px;
+        }
     </style>
 </head>
 <body>
@@ -73,13 +124,11 @@
     <section>
         <h2>Calendrier</h2>
         <!-- Boutons pour changer la vue du calendrier -->
-        <div>
+        <div class="view-buttons">
             <button onclick="changeView('month')">Mois</button>
             <button onclick="changeView('agendaWeek')">Semaine</button>
             <button onclick="changeView('agendaDay')">Jour</button>
         </div>
-        <!-- Calendrier -->
-        <div id="calendar"></div>
         <!-- Formulaire d'ajout d'événements -->
         <form id="event-form">
             <label for="event-title">Titre de l'événement:</label>
@@ -95,7 +144,19 @@
             </select>
             <button type="button" onclick="addEvent()">Ajouter l'événement</button>
         </form>
+
+        <!-- Cases d'informations d'un événement -->
+        <div class="event-info">
+            <h3>Titre de l'événement</h3>
+            <p>Date et heure de début: 20/12/2023 14:30</p>
+            <p>Répétition: Hebdomadaire</p>
+        </div>
     </section>
+
+    <!-- Calendrier avec conteneur limité en largeur -->
+    <div id="calendar-container">
+        <div id="calendar"></div>
+    </div>
 
     <footer>
         <p>&copy; 2023 Planny. All rights reserved.</p>
@@ -138,11 +199,8 @@
                     // ... Ajoutez d'autres événements selon vos besoins
                 ],
                 eventClick: function(event) {
-                    if (confirm("Voulez-vous supprimer cet événement?")) {
-                        $('#calendar').fullCalendar('removeEvents', function (calEvent) {
-                            return calEvent._id === event._id;
-                        });
-                    }
+                    // Afficher les informations de l'événement sélectionné
+                    showEventInfo(event);
                 }
             });
 
@@ -154,45 +212,27 @@
 
         // Fonction pour ajouter un événement depuis le formulaire
         function addEvent() {
-            const title = $('#event-title').val();
-            const date = $('#event-date').val();
-            const recurrence = $('#event-recurrence').val();
+            // ... (le reste du code pour ajouter un événement)
+        }
 
-            if (title && date) {
-                // Convertir la date en format ISO pour FullCalendar
-                const isoDate = moment(date).toISOString();
+        // Fonction pour afficher les informations de l'événement
+        function showEventInfo(event) {
+            const eventInfoContainer = document.querySelector('.event-info');
+            const eventTitle = document.createElement('h3');
+            const eventDate = document.createElement('p');
+            const eventRecurrence = document.createElement('p');
 
-                // Ajouter l'événement au calendrier
-                $('#calendar').fullCalendar('renderEvent', {
-                    title: title,
-                    start: isoDate,
-                    allDay: false, // Permet d'afficher les heures
-                    recurrence: recurrence === 'none' ? '' : recurrence
-                }, true);
+            eventTitle.textContent = event.title;
+            eventDate.textContent = `Date et heure de début: ${event.start.format('DD/MM/YYYY HH:mm')}`;
+            eventRecurrence.textContent = `Répétition: ${event.recurrence || 'Aucune'}`;
 
-                // Si la récurrence est activée, ajouter des événements supplémentaires
-                if (recurrence !== 'none') {
-                    const recurrenceInterval = recurrence === 'daily' ? 1 : 7; // Interval quotidien ou hebdomadaire
-                    const recurrenceLength = 50; // Nombre d'occurrences souhaitées
+            // Effacer le contenu précédent
+            eventInfoContainer.innerHTML = '';
 
-                    for (let i = 1; i <= recurrenceLength; i++) {
-                        const newDate = moment(date).add(i * recurrenceInterval, 'days').toISOString();
-                        $('#calendar').fullCalendar('renderEvent', {
-                            title: title,
-                            start: newDate,
-                            allDay: false,
-                            recurrence: recurrence
-                        }, true);
-                    }
-                }
-
-                // Effacer les champs du formulaire après l'ajout
-                $('#event-title').val('');
-                $('#event-date').val('');
-                $('#event-recurrence').val('none');
-            } else {
-                alert('Veuillez remplir tous les champs.');
-            }
+            // Ajouter les nouvelles informations
+            eventInfoContainer.appendChild(eventTitle);
+            eventInfoContainer.appendChild(eventDate);
+            eventInfoContainer.appendChild(eventRecurrence);
         }
     </script>
 </body>
